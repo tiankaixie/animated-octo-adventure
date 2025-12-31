@@ -1,0 +1,14 @@
+[project]
+name = "ml-sharp-demo"
+version = "0.1.0"
+description = "ML-SHARP Web Demo - 3D Gaussian Splatting from single images"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.setuptools]
+py-modules = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = []

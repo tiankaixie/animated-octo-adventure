@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML-SHARP 3D Gaussian Splatting Demo</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Upload Section -->
+        <div id="upload-section" class="section active">
+            <div class="container">
+                <h1>ML-SHARP 3D Demo</h1>
+                <p class="subtitle">将单张图片转换为 3D Gaussian Splatting 场景</p>
+
+                <div class="upload-area">
+                    <input
+                        type="file"
+                        id="imageInput"
+                        accept="image/png,image/jpeg,image/jpg"
+                        style="display: none;"
+                    >
+                    <label for="imageInput" class="upload-label">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">点击选择图片或拖拽到此处</div>
+                        <div class="upload-hint">支持 JPG, PNG 格式，最大 10MB</div>
+                    </label>
+
+                    <div id="preview-container" style="display: none;">
+                        <img id="imagePreview" alt="Preview">
+                        <div class="upload-hint" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                            💡 提示：可以直接拖拽新图片到这里替换
+                        </div>
+                        <button id="changeImageBtn" class="btn btn-secondary">更换图片</button>
+                    </div>
+                </div>
+
+                <button id="processBtn" class="btn btn-primary" disabled>
+                    生成 3D 场景
+                </button>
+
+                <div id="status" class="status-message"></div>
+
+                <div id="progress-container" class="progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text">处理中...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Viewer Section -->
+        <div id="viewer-section" class="section">
+            <div id="viewer-container">
+                <!-- Canvas will be created by GaussianSplats3D viewer -->
+
+                <div id="viewer-controls" class="viewer-controls">
+                    <div class="control-panel">
+                        <h3>控制说明</h3>
+                        <ul>
+                            <li><strong>旋转:</strong> 鼠标左键拖拽</li>
+                            <li><strong>平移:</strong> 鼠标右键拖拽</li>
+                            <li><strong>缩放:</strong> 鼠标滚轮</li>
+                        </ul>
+                    </div>
+                    <button id="backBtn" class="btn btn-secondary">返回上传</button>
+                </div>
+
+                <div id="loading-overlay" class="loading-overlay">
+                    <div class="spinner"></div>
+                    <div class="loading-text">加载 3D 场景中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import maps for ES modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+            "@mkkellogg/gaussian-splats-3d": "https://cdn.jsdelivr.net/npm/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js"
+        }
+    }
+    </script>
+
+    <!-- Main application script -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
