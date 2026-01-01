@@ -3,7 +3,7 @@
 // Pos: Main application logic coordinating file upload, processing, and viewer initialization
 // If this file is updated, you must update this header and the parent folder's README.md.
 
-import { initViewer, cleanupViewer } from './viewer.js';
+import { initViewer, cleanupViewer } from './viewer-enhanced.js';
 
 class MLSharpApp {
     constructor() {
