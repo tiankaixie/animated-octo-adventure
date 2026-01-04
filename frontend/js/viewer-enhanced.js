@@ -360,8 +360,8 @@ export async function initViewer(containerId, plyUrl) {
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0a0a); // Darker background
 
-        // Create camera
-        camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 1000);
+        // Create camera with extended far plane for large scenes
+        camera = new THREE.PerspectiveCamera(60, width / height, 0.001, 10000);
         camera.position.set(0, 0, 3);
 
         // Create renderer with better settings
@@ -379,13 +379,15 @@ export async function initViewer(containerId, plyUrl) {
         controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
+        controls.enableZoom = true;       // Explicitly enable zoom
         controls.rotateSpeed = 0.5;
-        controls.zoomSpeed = 0.8;
-        controls.minDistance = 0.5;
-        controls.maxDistance = 20;
+        controls.zoomSpeed = 1.2;
+        controls.minDistance = 0;         // Allow getting very close
+        controls.maxDistance = Infinity;  // Allow unlimited zoom out
         controls.enablePan = true;
         controls.autoRotate = true;
         controls.autoRotateSpeed = 0.3;
+        controls.screenSpacePanning = true; // Better panning behavior
 
         console.log('Three.js scene created, loading PLY...');
 
@@ -439,16 +441,35 @@ export async function initViewer(containerId, plyUrl) {
         pointCloud = new THREE.Points(geometry, material);
         scene.add(pointCloud);
 
-        // Position camera based on bounding sphere
+        // Analyze point cloud to find optimal camera position
+        // Camera should be positioned in front of the point cloud (max Z direction)
         if (boundingSphere) {
             const radius = boundingSphere.radius;
-            const distance = radius * 2.5;
+
+            // Find the bounding box and Z range of the point cloud
+            geometry.computeBoundingBox();
+            const boundingBox = geometry.boundingBox;
+
+            // Calculate center of the point cloud
+            const center = new THREE.Vector3();
+            boundingBox.getCenter(center);
+
+            // Find the maximum Z value (front of the point cloud)
+            const maxZ = boundingBox.max.z;
+            const minZ = boundingBox.min.z;
+            const zRange = maxZ - minZ;
+
+            // Position camera in front of the point cloud
+            // Distance based on the larger of radius or diagonal
+            const diagonal = new THREE.Vector3().subVectors(boundingBox.max, boundingBox.min).length();
+            const distance = Math.max(radius, diagonal) * 1.5;
+
             camera.position.set(
-                boundingSphere.center.x,
-                boundingSphere.center.y,
-                boundingSphere.center.z + distance
+                center.x,
+                center.y,
+                maxZ + distance  // Position camera in front (max Z + distance)
             );
-            controls.target.copy(boundingSphere.center);
+            controls.target.copy(center);
             controls.update();
 
             // Adjust uniform values based on scene scale
@@ -456,7 +477,8 @@ export async function initViewer(containerId, plyUrl) {
             uniforms.uNoiseStrength.value = radius * 0.01;
             uniforms.uMouseRadius.value = radius * 0.3;
 
-            console.log(`Camera positioned at distance ${distance.toFixed(2)}`);
+            console.log(`Point cloud bounds: Z range [${minZ.toFixed(2)}, ${maxZ.toFixed(2)}]`);
+            console.log(`Camera positioned at Z=${(maxZ + distance).toFixed(2)}, looking at center`);
         }
 
         console.log('Enhanced point cloud created, starting render loop...');
