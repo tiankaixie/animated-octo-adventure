@@ -12,7 +12,7 @@ UPLOAD_DIR = BASE_DIR / "uploads"
 OUTPUT_DIR = UPLOAD_DIR / "outputs"
 
 # File upload settings
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
 # ml-sharp settings
