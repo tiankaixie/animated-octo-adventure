@@ -91,7 +91,7 @@ MLSharpApp initialized successfully!
 **解决**:
 - 查看控制台是否有红色错误信息
 - 确认选择的是图片文件 (JPG/PNG)
-- 确认文件小于 10MB
+- 确认文件小于 100MB
 
 ## 收集调试信息
 

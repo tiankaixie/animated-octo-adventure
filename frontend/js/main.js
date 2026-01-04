@@ -147,11 +147,11 @@ class MLSharpApp {
             return;
         }
 
-        // Validate file size (10MB)
-        const maxSize = 10 * 1024 * 1024;
+        // Validate file size (100MB)
+        const maxSize = 100 * 1024 * 1024;
         if (file.size > maxSize) {
             console.error('File too large:', file.size);
-            this.showStatus('图片大小不能超过 10MB', 'error');
+            this.showStatus('图片大小不能超过 100MB', 'error');
             return;
         }
 
