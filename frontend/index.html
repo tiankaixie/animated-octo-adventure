@@ -51,44 +51,7 @@
             </div>
         </div>
 
-        <!-- Viewer Section -->
-        <div id="viewer-section" class="section">
-            <div id="viewer-container">
-                <!-- Canvas will be created by GaussianSplats3D viewer -->
-
-                <div id="viewer-controls" class="viewer-controls">
-                    <div class="control-panel">
-                        <span class="effect-badge">Particle Cloud</span>
-                        <h3>控制说明</h3>
-                        <ul>
-                            <li><strong>旋转</strong> 鼠标左键拖拽</li>
-                            <li><strong>平移</strong> 鼠标右键拖拽</li>
-                            <li><strong>缩放</strong> 鼠标滚轮</li>
-                            <li><strong>交互</strong> 移动鼠标靠近粒子</li>
-                        </ul>
-                    </div>
-                    <button id="backBtn" class="btn btn-secondary">返回上传</button>
-                </div>
-
-                <div id="loading-overlay" class="loading-overlay">
-                    <div class="spinner"></div>
-                    <div class="loading-text">加载 3D 场景中...</div>
-                </div>
-            </div>
-        </div>
     </div>
-
-    <!-- Import maps for ES modules -->
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
-            "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19.2/dist/lil-gui.esm.min.js",
-            "@mkkellogg/gaussian-splats-3d": "https://cdn.jsdelivr.net/npm/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js"
-        }
-    }
-    </script>
 
     <!-- Main application script -->
     <script type="module" src="js/main.js"></script>
