@@ -1,9 +1,7 @@
 // Input: User interactions (file upload, button clicks)
-// Output: API calls to backend, UI state updates
-// Pos: Main application logic coordinating file upload, processing, and viewer initialization
+// Output: API calls to backend, triggers PLY file download
+// Pos: Main application logic coordinating file upload, processing, and auto-download
 // If this file is updated, you must update this header and the parent folder's README.md.
-
-import { initViewer, cleanupViewer } from './viewer-enhanced.js';
 
 class MLSharpApp {
     constructor() {
@@ -16,8 +14,6 @@ class MLSharpApp {
         this.processBtn = document.getElementById('processBtn');
         this.statusDiv = document.getElementById('status');
         this.uploadSection = document.getElementById('upload-section');
-        this.viewerSection = document.getElementById('viewer-section');
-        this.backBtn = document.getElementById('backBtn');
         this.progressContainer = document.getElementById('progress-container');
         this.previewContainer = document.getElementById('preview-container');
         this.imagePreview = document.getElementById('imagePreview');
@@ -54,9 +50,6 @@ class MLSharpApp {
             console.log('Process button clicked');
             this.handleProcess();
         });
-
-        // Back button click handler
-        this.backBtn.addEventListener('click', () => this.handleBack());
 
         // Change image button handler
         this.changeImageBtn.addEventListener('click', () => {
@@ -202,8 +195,8 @@ class MLSharpApp {
             // Step 3: Poll for completion
             await this.pollStatus(taskId);
 
-            // Step 4: Load and display result
-            this.showStatus('正在加载 3D 场景...', 'info');
+            // Step 4: Download PLY file
+            this.showStatus('正在下载 PLY 文件...', 'info');
             await this.loadResult(taskId);
 
         } catch (error) {
@@ -279,40 +272,35 @@ class MLSharpApp {
         // Backend serves cleaned PLY files
         const plyUrl = `/api/result/${taskId}.ply`;
 
-        // Switch to viewer section
-        this.uploadSection.classList.remove('active');
-        this.viewerSection.classList.add('active');
+        // Trigger automatic download
+        const link = document.createElement('a');
+        link.href = plyUrl;
+        link.download = `gaussian_splat_${taskId}.ply`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-        // Show loading overlay
-        const loadingOverlay = document.getElementById('loading-overlay');
-        loadingOverlay.style.display = 'flex';
-
-        try {
-            // Initialize 3D viewer
-            await initViewer('canvas', plyUrl);
-
-            // Hide loading overlay
-            loadingOverlay.style.display = 'none';
-
-        } catch (error) {
-            loadingOverlay.style.display = 'none';
-            throw new Error(`加载 3D 场景失败: ${error.message}`);
-        }
+        // Reset to initial state
+        this.resetToInitialState();
     }
 
-    handleBack() {
-        // Cleanup viewer
-        cleanupViewer();
+    resetToInitialState() {
+        // Clear selected file
+        this.selectedFile = null;
+        this.imageInput.value = '';
 
-        // Switch back to upload section
-        this.viewerSection.classList.remove('active');
-        this.uploadSection.classList.add('active');
+        // Hide preview, show upload label
+        this.previewContainer.style.display = 'none';
+        const uploadLabel = document.querySelector('.upload-label');
+        if (uploadLabel) {
+            uploadLabel.style.display = 'flex';
+        }
 
-        // Reset UI
-        this.processBtn.disabled = false;
+        // Reset button and status
+        this.processBtn.disabled = true;
         this.processBtn.textContent = '生成 3D 场景';
         this.showProgress(false);
-        this.showStatus('');
+        this.showStatus('PLY 文件已下载完成', 'success');
     }
 
     showStatus(message, type = '') {

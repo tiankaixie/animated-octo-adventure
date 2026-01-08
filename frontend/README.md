@@ -2,14 +2,14 @@ Once the contents of this folder change, update this document.
 
 ## Architecture
 
-Vanilla JavaScript frontend with Three.js-based point cloud viewer featuring animated particle effects (Revelium Milkmaid style). Event-driven file upload, polling-based status updates, and WebGL/WebGPU rendering with custom shaders. No build tools or bundlers required.
+Vanilla JavaScript frontend for image upload and PLY file auto-download. Event-driven file upload, polling-based status updates, and automatic PLY download on completion. No build tools or bundlers required.
 
 ## File Registry
 
 | Name | Status/Importance | Core Function |
 |------|------------------|---------------|
-| index.html | Core | Main HTML structure with upload UI and 3D viewer container |
+| index.html | Core | Main HTML structure with upload UI |
 | css/style.css | Core | Complete styling including gradients, animations, and responsive layout |
-| js/main.js | Core | Application orchestration: file upload, API communication, UI state management |
-| js/viewer.js | Legacy | Original simple point cloud viewer using THREE.PointsMaterial |
-| js/viewer-enhanced.js | Core | Enhanced particle viewer with custom GLSL shaders, noise animation, and mouse interaction (Revelium style) |
+| js/main.js | Core | Application orchestration: file upload, API communication, auto-download PLY |
+| js/viewer.js | Legacy | Original simple point cloud viewer (unused) |
+| js/viewer-enhanced.js | Legacy | Enhanced particle viewer with custom GLSL shaders (unused) |
