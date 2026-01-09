@@ -1,16 +1,19 @@
-# Input: HTTP requests from frontend, image files
+# Input: HTTP requests from frontend, image files (single or batch)
 # Output: JSON responses, PLY files for 3D Gaussian Splatting
 # Pos: Main FastAPI application handling image upload, ml-sharp processing, and file serving
 # If this file is updated, you must update this header and the parent folder's README.md.
 
 import asyncio
+import shutil
 import uuid
+import zipfile
+import io
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import aiofiles
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -36,6 +39,8 @@ app.add_middleware(
 
 # Task status tracking
 tasks: Dict[str, Dict] = {}
+# Batch task tracking
+batch_tasks: Dict[str, Dict] = {}
 
 
 def validate_file(filename: str, file_size: int) -> None:
@@ -225,10 +230,223 @@ async def get_result(task_id: str):
     )
 
 
+@app.post("/api/batch/upload")
+async def batch_upload(files: List[UploadFile] = File(...)):
+    """Upload multiple image files for batch processing"""
+    batch_id = str(uuid.uuid4())
+    batch_dir = UPLOAD_DIR / batch_id
+    batch_dir.mkdir(parents=True, exist_ok=True)
+
+    file_list = []
+    for file in files:
+        # Read file content
+        content = await file.read()
+
+        # Validate file
+        ext = Path(file.filename).suffix.lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            continue  # Skip invalid files
+        if len(content) > MAX_FILE_SIZE:
+            continue  # Skip files that are too large
+
+        # Save file with original name
+        safe_filename = Path(file.filename).name
+        input_path = batch_dir / safe_filename
+        async with aiofiles.open(input_path, 'wb') as f:
+            await f.write(content)
+
+        file_list.append({
+            "filename": safe_filename,
+            "path": str(input_path),
+            "status": "pending"
+        })
+
+    if not file_list:
+        raise HTTPException(status_code=400, detail="No valid image files found")
+
+    # Initialize batch task
+    batch_tasks[batch_id] = {
+        "status": "uploaded",
+        "files": file_list,
+        "completed": 0,
+        "total": len(file_list),
+        "output_dir": None,
+        "error": None
+    }
+
+    return {
+        "batch_id": batch_id,
+        "file_count": len(file_list),
+        "files": [f["filename"] for f in file_list]
+    }
+
+
+@app.post("/api/batch/process/{batch_id}")
+async def batch_process(batch_id: str):
+    """Start batch processing for uploaded files"""
+    if batch_id not in batch_tasks:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    if batch_tasks[batch_id]["status"] == "processing":
+        return {"status": "already_processing"}
+
+    batch_tasks[batch_id]["status"] = "processing"
+
+    # Start processing in background
+    asyncio.create_task(run_batch_processing(batch_id))
+
+    return {"status": "processing", "batch_id": batch_id}
+
+
+async def run_batch_processing(batch_id: str):
+    """Run ml-sharp processing for all files in batch"""
+    try:
+        batch = batch_tasks[batch_id]
+        batch_dir = UPLOAD_DIR / batch_id
+        output_dir = batch_dir / "output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        batch["output_dir"] = str(output_dir)
+
+        for i, file_info in enumerate(batch["files"]):
+            file_info["status"] = "processing"
+
+            input_path = Path(file_info["path"])
+
+            # Create a temporary directory for each file to isolate processing
+            file_input_dir = batch_dir / f"input_{input_path.stem}"
+            file_input_dir.mkdir(parents=True, exist_ok=True)
+
+            # Copy file to isolated directory
+            isolated_input = file_input_dir / input_path.name
+            shutil.copy2(input_path, isolated_input)
+
+            file_output_dir = output_dir / input_path.stem
+
+            # Run sharp predict command (processes all files in input directory)
+            process = await asyncio.create_subprocess_exec(
+                "sharp", "predict",
+                "-i", str(file_input_dir),
+                "-o", str(file_output_dir),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(),
+                    timeout=SHARP_TIMEOUT
+                )
+
+                if process.returncode != 0:
+                    file_info["status"] = "failed"
+                    file_info["error"] = stderr.decode() if stderr else "Unknown error"
+                else:
+                    # Find and convert PLY file
+                    ply_files = list(file_output_dir.glob("*.ply"))
+                    if ply_files:
+                        original_ply = ply_files[0]
+                        cleaned_ply = file_output_dir / f"{input_path.stem}_cleaned.ply"
+
+                        try:
+                            import sys
+                            sys.path.insert(0, str(BASE_DIR))
+                            from convert_ply import convert_mlsharp_ply
+                            convert_mlsharp_ply(original_ply, cleaned_ply)
+                            file_info["output_path"] = str(cleaned_ply)
+                        except Exception:
+                            file_info["output_path"] = str(original_ply)
+
+                        file_info["status"] = "completed"
+                    else:
+                        file_info["status"] = "failed"
+                        file_info["error"] = "No PLY file generated"
+
+            except asyncio.TimeoutError:
+                process.kill()
+                file_info["status"] = "failed"
+                file_info["error"] = "Processing timeout"
+
+            batch["completed"] = i + 1
+
+        # Check if all completed
+        completed_count = sum(1 for f in batch["files"] if f["status"] == "completed")
+        if completed_count == len(batch["files"]):
+            batch["status"] = "completed"
+        elif completed_count > 0:
+            batch["status"] = "partial"
+        else:
+            batch["status"] = "failed"
+
+    except Exception as e:
+        batch_tasks[batch_id]["status"] = "failed"
+        batch_tasks[batch_id]["error"] = str(e)
+
+
+@app.get("/api/batch/status/{batch_id}")
+async def batch_status(batch_id: str):
+    """Get batch processing status"""
+    if batch_id not in batch_tasks:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    batch = batch_tasks[batch_id]
+    return {
+        "status": batch["status"],
+        "completed": batch["completed"],
+        "total": batch["total"],
+        "files": [
+            {
+                "filename": f["filename"],
+                "status": f["status"],
+                "error": f.get("error")
+            }
+            for f in batch["files"]
+        ],
+        "error": batch.get("error")
+    }
+
+
+@app.get("/api/batch/result/{batch_id}")
+async def batch_result(batch_id: str):
+    """Download all completed PLY files as a ZIP"""
+    if batch_id not in batch_tasks:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    batch = batch_tasks[batch_id]
+
+    if batch["status"] not in ["completed", "partial"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Batch not ready. Status: {batch['status']}"
+        )
+
+    # Create ZIP file in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for file_info in batch["files"]:
+            if file_info["status"] == "completed" and file_info.get("output_path"):
+                output_path = Path(file_info["output_path"])
+                if output_path.exists():
+                    # Use original filename with .ply extension
+                    arcname = f"{Path(file_info['filename']).stem}.ply"
+                    zip_file.write(output_path, arcname)
+
+    zip_buffer.seek(0)
+
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f"attachment; filename=batch_{batch_id}.zip",
+            "Access-Control-Allow-Origin": "*"
+        }
+    )
+
+
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "tasks_count": len(tasks)}
+    return {"status": "healthy", "tasks_count": len(tasks), "batch_count": len(batch_tasks)}
 
 
 # Mount frontend static files
