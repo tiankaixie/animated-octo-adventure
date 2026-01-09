@@ -12,33 +12,84 @@
         <div id="upload-section" class="section active">
             <div class="container">
                 <h1>ML-SHARP 3D Demo</h1>
-                <p class="subtitle">将单张图片转换为 3D Gaussian Splatting 场景</p>
+                <p class="subtitle">将图片转换为 3D Gaussian Splatting 场景</p>
 
-                <div class="upload-area">
-                    <input
-                        type="file"
-                        id="imageInput"
-                        accept="image/png,image/jpeg,image/jpg"
-                        style="display: none;"
-                    >
-                    <label for="imageInput" class="upload-label">
-                        <div class="upload-icon">📷</div>
-                        <div class="upload-text">点击选择图片或拖拽到此处</div>
-                        <div class="upload-hint">支持 JPG, PNG 格式，最大 100MB</div>
-                    </label>
-
-                    <div id="preview-container" style="display: none;">
-                        <img id="imagePreview" alt="Preview">
-                        <div class="upload-hint" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
-                            💡 提示：可以直接拖拽新图片到这里替换
-                        </div>
-                        <button id="changeImageBtn" class="btn btn-secondary">更换图片</button>
-                    </div>
+                <!-- Mode Toggle -->
+                <div class="mode-toggle">
+                    <button id="singleModeBtn" class="mode-btn active">单张图片</button>
+                    <button id="batchModeBtn" class="mode-btn">批量处理</button>
                 </div>
 
-                <button id="processBtn" class="btn btn-primary" disabled>
-                    生成 3D 场景
-                </button>
+                <!-- Single Image Upload -->
+                <div id="single-upload" class="upload-mode active">
+                    <div class="upload-area">
+                        <input
+                            type="file"
+                            id="imageInput"
+                            accept="image/png,image/jpeg,image/jpg"
+                            style="display: none;"
+                        >
+                        <label for="imageInput" class="upload-label">
+                            <div class="upload-icon">📷</div>
+                            <div class="upload-text">点击选择图片或拖拽到此处</div>
+                            <div class="upload-hint">支持 JPG, PNG 格式，最大 100MB</div>
+                        </label>
+
+                        <div id="preview-container" style="display: none;">
+                            <img id="imagePreview" alt="Preview">
+                            <div class="upload-hint" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                                💡 提示：可以直接拖拽新图片到这里替换
+                            </div>
+                            <button id="changeImageBtn" class="btn btn-secondary">更换图片</button>
+                        </div>
+                    </div>
+
+                    <button id="processBtn" class="btn btn-primary" disabled>
+                        生成 3D 场景
+                    </button>
+                </div>
+
+                <!-- Batch Upload -->
+                <div id="batch-upload" class="upload-mode">
+                    <div class="upload-area">
+                        <input
+                            type="file"
+                            id="folderInput"
+                            webkitdirectory
+                            directory
+                            multiple
+                            accept="image/png,image/jpeg,image/jpg"
+                            style="display: none;"
+                        >
+                        <input
+                            type="file"
+                            id="multiFileInput"
+                            multiple
+                            accept="image/png,image/jpeg,image/jpg"
+                            style="display: none;"
+                        >
+                        <label for="folderInput" class="upload-label" id="batchUploadLabel">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">点击选择文件夹</div>
+                            <div class="upload-hint">或拖拽文件夹到此处</div>
+                            <div class="upload-hint" style="margin-top: 0.5rem;">
+                                <span class="link-style" id="selectFilesLink">也可以选择多个文件</span>
+                            </div>
+                        </label>
+
+                        <div id="batch-preview-container" style="display: none;">
+                            <div class="batch-info">
+                                <span id="batchFileCount">0</span> 个图片文件
+                            </div>
+                            <div id="batch-file-list" class="batch-file-list"></div>
+                            <button id="changeFolderBtn" class="btn btn-secondary">重新选择</button>
+                        </div>
+                    </div>
+
+                    <button id="batchProcessBtn" class="btn btn-primary" disabled>
+                        批量生成 3D 场景
+                    </button>
+                </div>
 
                 <div id="status" class="status-message"></div>
 
@@ -47,6 +98,14 @@
                         <div class="progress-fill"></div>
                     </div>
                     <div class="progress-text">处理中...</div>
+                </div>
+
+                <!-- Batch Progress Detail -->
+                <div id="batch-progress" class="batch-progress" style="display: none;">
+                    <div class="batch-progress-header">
+                        处理进度: <span id="batchProgressCount">0/0</span>
+                    </div>
+                    <div id="batch-status-list" class="batch-status-list"></div>
                 </div>
             </div>
         </div>

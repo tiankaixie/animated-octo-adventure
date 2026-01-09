@@ -597,3 +597,156 @@ h1::before {
     background: rgba(4, 158, 244, 0.3);
     color: var(--text-primary);
 }
+
+/* Mode Toggle */
+.mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0.25rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mode-btn.active {
+    background: var(--accent-primary);
+    color: white;
+    box-shadow: 0 2px 10px rgba(4, 158, 244, 0.3);
+}
+
+/* Upload Mode Containers */
+.upload-mode {
+    display: none;
+}
+
+.upload-mode.active {
+    display: block;
+}
+
+/* Link Style Text */
+.link-style {
+    color: var(--accent-primary);
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+.link-style:hover {
+    color: var(--accent-secondary);
+}
+
+/* Batch Preview */
+#batch-preview-container {
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+}
+
+.batch-info {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.batch-file-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: var(--bg-primary);
+    border-radius: 6px;
+}
+
+.batch-file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem;
+}
+
+.batch-file-item:last-child {
+    border-bottom: none;
+}
+
+.batch-file-name {
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 70%;
+}
+
+.batch-file-status {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.batch-file-status.pending {
+    background: rgba(255, 170, 0, 0.15);
+    color: var(--warning);
+}
+
+.batch-file-status.processing {
+    background: rgba(4, 158, 244, 0.15);
+    color: var(--accent-secondary);
+}
+
+.batch-file-status.completed {
+    background: rgba(0, 255, 136, 0.15);
+    color: var(--success);
+}
+
+.batch-file-status.failed {
+    background: rgba(255, 68, 102, 0.15);
+    color: var(--error);
+}
+
+/* Batch Progress */
+.batch-progress {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.batch-progress-header {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+.batch-status-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
