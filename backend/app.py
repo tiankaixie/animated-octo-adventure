@@ -23,7 +23,8 @@ from config import (
     MAX_FILE_SIZE,
     ALLOWED_EXTENSIONS,
     SHARP_TIMEOUT,
-    BASE_DIR
+    BASE_DIR,
+    SHARP_BIN
 )
 
 app = FastAPI(title="ML-SHARP Web Demo")
@@ -325,7 +326,7 @@ async def run_batch_processing(batch_id: str):
 
             # Run sharp predict command (processes all files in input directory)
             process = await asyncio.create_subprocess_exec(
-                "sharp", "predict",
+                str(SHARP_BIN), "predict",
                 "-i", str(file_input_dir),
                 "-o", str(file_output_dir),
                 stdout=asyncio.subprocess.PIPE,

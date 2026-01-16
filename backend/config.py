@@ -8,6 +8,7 @@ from pathlib import Path
 
 # Base paths
 BASE_DIR = Path(__file__).parent
+SHARP_BIN = BASE_DIR.parent / ".venv" / "bin" / "sharp"
 UPLOAD_DIR = BASE_DIR / "uploads"
 OUTPUT_DIR = UPLOAD_DIR / "outputs"
 
